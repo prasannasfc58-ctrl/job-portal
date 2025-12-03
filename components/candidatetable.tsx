@@ -352,12 +352,12 @@ const scoreDropdownRef = useRef<HTMLDivElement | null>(null);
                             <button onClick={() => setModalState({ isOpen: true, type: 'view', candidate })} className="text-gray-400 hover:text-gray-600 transition-colors">
                                 <Eye size={20} />
                             </button>
-                            <button 
+                            {/* <button 
                                 onClick={() => setModalState({ isOpen: true, type: 'download', candidate })}
                                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition-colors"
                             >
                                 <Download size={16} /> Resume
-                            </button>
+                            </button> */}
                         </div>
                       </td>
                     </tr>

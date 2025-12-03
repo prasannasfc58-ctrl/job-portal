@@ -39,7 +39,7 @@ export default function Sidebar({ role }: SidebarProps) {
       ) : (
         <nav className="space-y-3">
           <a href="/company" className="block p-3 rounded-lg hover:bg-orange-100">👥 Candidates</a>
-          <a href="/company/jobs" className="block p-3 rounded-lg hover:bg-orange-100">💼 Jobs Post</a>
+          <a href="/jobPosting" className="block p-3 rounded-lg hover:bg-orange-100">💼 Jobs Post</a>
           <button onClick={handleLogout} className="w-full text-left p-3 rounded-lg hover:bg-red-100">🔐 Logout</button>
         </nav>
       )}

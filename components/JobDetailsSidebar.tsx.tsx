@@ -62,7 +62,7 @@ export default function JobDetailsSidebar({ job }: any) {
       </div>
 
       {/* Salary insights */}
-      <div className="bg-white p-4 rounded-xl shadow-sm">
+      {/* <div className="bg-white p-4 rounded-xl shadow-sm">
         <div className="flex items-center justify-between">
           <h4 className="font-semibold">Salary Insights</h4>
           <BarChart3 size={18} className="text-gray-500"/>
@@ -77,7 +77,7 @@ export default function JobDetailsSidebar({ job }: any) {
             <div className="w-full bg-gray-200 h-2 rounded-full mt-2"><div className="bg-gray-400 h-2 rounded-full w-[60%]"></div></div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Small card: Services / CTA
       <div className="bg-white p-4 rounded-xl shadow-sm text-sm">
