@@ -57,7 +57,7 @@ const INITIAL_DATA: Candidate[] = Array.from({ length: 42 }, (_, i) => {
   };
 });
 
-// --- Helper Components ---
+// --- Skill Badge Helper ---
 
 const getSkillBadgeStyles = (skill: string) => {
   const s = skill.toLowerCase();
@@ -102,21 +102,25 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps) => {
           {children}
         </div>
         <div className="p-4 bg-gray-50 flex justify-end">
-             <button onClick={onClose} className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium transition-colors">Close</button>
+          <button onClick={onClose} className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium transition-colors">Close</button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- Hook for Click Outside ---
+// --- FIXED HOOK (No More TypeScript Error) ---
+// ✅ Accept null safely
 function useOnClickOutside(
-  ref: React.RefObject<HTMLElement | null>, 
+  ref: React.RefObject<HTMLElement | null>,
   handler: () => void
 ) {
   useEffect(() => {
     const listener = (event: MouseEvent | TouchEvent) => {
-      if (!ref.current || ref.current.contains(event.target as Node)) return;
+      // if ref not mounted OR click is inside → do nothing
+      if (!ref.current || ref.current.contains(event.target as Node)) {
+        return;
+      }
       handler();
     };
 
@@ -132,42 +136,44 @@ function useOnClickOutside(
 
 
 // --- Main Component ---
-
 export default function CompanyCandidate() {
-  // Data State
-  const [data, setData] = useState<Candidate[]>(INITIAL_DATA);
-  
-  // Filter & Search State
+  const [data] = useState<Candidate[]>(INITIAL_DATA);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [courseFilter, setCourseFilter] = useState<string>('All');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Candidate | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // UI State
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  // Modal State
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     type: 'view' | 'download' | null;
     candidate: Candidate | null;
   }>({ isOpen: false, type: null, candidate: null });
 
-  // Refs
-const statusDropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const statusDropdownRef = useRef<HTMLDivElement | null>(null);
 const courseDropdownRef = useRef<HTMLDivElement | null>(null);
 const scoreDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  useOnClickOutside(statusDropdownRef, () => activeDropdown === 'status' && setActiveDropdown(null));
-  useOnClickOutside(courseDropdownRef, () => activeDropdown === 'course' && setActiveDropdown(null));
-  useOnClickOutside(scoreDropdownRef, () => activeDropdown === 'score' && setActiveDropdown(null));
+useOnClickOutside(statusDropdownRef, () => {
+  if (activeDropdown === "status") setActiveDropdown(null);
+});
 
-  // --- Logic ---
+useOnClickOutside(courseDropdownRef, () => {
+  if (activeDropdown === "course") setActiveDropdown(null);
+});
 
+useOnClickOutside(scoreDropdownRef, () => {
+  if (activeDropdown === "score") setActiveDropdown(null);
+});
+
+
+  // --- Filters & Sorting Logic ---
   const filteredData = useMemo(() => {
     return data.filter(candidate => {
       const matchesSearch = 
@@ -175,7 +181,7 @@ const scoreDropdownRef = useRef<HTMLDivElement | null>(null);
         candidate.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         candidate.course.toLowerCase().includes(searchQuery.toLowerCase()) ||
         candidate.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+
       const matchesStatus = statusFilter === 'All' || candidate.status === statusFilter;
       const matchesCourse = courseFilter === 'All' || candidate.course === courseFilter;
 
@@ -186,9 +192,9 @@ const scoreDropdownRef = useRef<HTMLDivElement | null>(null);
   const sortedData = useMemo(() => {
     if (!sortConfig.key) return filteredData;
     return [...filteredData].sort((a, b) => {
-      // @ts-ignore - simple dynamic sort handling
+      //@ts-ignore
       const aValue = a[sortConfig.key];
-      // @ts-ignore
+      //@ts-ignore
       const bValue = b[sortConfig.key];
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -202,13 +208,11 @@ const scoreDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter, courseFilter]);
 
-  // --- Handlers ---
-
   const handleSort = (key: keyof Candidate) => {
     let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
     setSortConfig({ key, direction });
-    setActiveDropdown(null); 
+    setActiveDropdown(null);
   };
 
   const toggleDropdown = (name: string) => setActiveDropdown(activeDropdown === name ? null : name);
@@ -227,138 +231,159 @@ const scoreDropdownRef = useRef<HTMLDivElement | null>(null);
           animation: fadeIn 0.2s ease-out forwards;
         }
       `}</style>
+
       <div className="w-full max-w-[1400px] bg-white flex flex-col min-h-[600px]">
 
-        {/* --- Header Bar --- */}
+        {/* SEARCH + FILTER BAR */}
         <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-6">
-          {/* Search */}
+
           <div className="relative w-full xl:w-[450px]">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
             <input
-              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Candidates by skills, name, mobile..."
-              className="block w-full pl-11 pr-3 py-3 rounded-lg bg-gray-50 border-none text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
+              className="block w-full pl-11 pr-3 py-3 rounded-lg bg-gray-50 border-none text-gray-600 placeholder-gray-400 focus:ring-2 focus:ring-orange-500/50"
             />
           </div>
 
-          {/* Filters */}
           <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-            
-            {/* Status Filter */}
+
+            {/* STATUS FILTER */}
             <div className="relative" ref={statusDropdownRef}>
-              <button onClick={() => toggleDropdown('status')} className="flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 font-semibold text-sm transition-colors min-w-[100px]">
+              <button onClick={() => toggleDropdown('status')} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg min-w-[100px]">
                 Status <ChevronDown className="h-4 w-4 ml-2" />
               </button>
+
               {activeDropdown === 'status' && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                <div className="absolute top-full mt-2 w-48 bg-white rounded-xl shadow-lg border py-1 z-50">
                   {uniqueStatuses.map(status => (
-                    <button key={status} onClick={() => { setStatusFilter(status); setActiveDropdown(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between">
-                      {status} {statusFilter === status && <Check className="h-4 w-4 text-orange-500" />}
+                    <button
+                      key={status}
+                      onClick={() => { setStatusFilter(status); setActiveDropdown(null); }}
+                      className="w-full px-4 py-2 text-left text-sm flex justify-between"
+                    >
+                      {status}
+                      {statusFilter === status && <Check className="h-4 w-4 text-orange-500" />}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Courses Filter */}
+            {/* COURSE FILTER */}
             <div className="relative" ref={courseDropdownRef}>
-              <button onClick={() => toggleDropdown('course')} className="flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 font-semibold text-sm transition-colors min-w-[100px]">
-                <span className="truncate max-w-[120px]">{courseFilter === 'All' ? 'Courses' : courseFilter}</span> <ChevronDown className="h-4 w-4 ml-2" />
+              <button onClick={() => toggleDropdown('course')} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg min-w-[100px]">
+                {courseFilter === 'All' ? 'Courses' : courseFilter}
+                <ChevronDown className="h-4 w-4 ml-2" />
               </button>
+
               {activeDropdown === 'course' && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                <div className="absolute top-full mt-2 w-64 bg-white rounded-xl shadow-lg border py-1 z-50">
                   {uniqueCourses.map(course => (
-                    <button key={course} onClick={() => { setCourseFilter(course); setActiveDropdown(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between">
-                      <span className="truncate">{course}</span> {courseFilter === course && <Check className="h-4 w-4 text-orange-500" />}
+                    <button
+                      key={course}
+                      onClick={() => { setCourseFilter(course); setActiveDropdown(null); }}
+                      className="w-full px-4 py-2 text-left text-sm flex justify-between"
+                    >
+                      {course}
+                      {courseFilter === course && <Check className="h-4 w-4 text-orange-500" />}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* CADD Score Filter */}
+            {/* SCORE FILTER */}
             <div className="relative" ref={scoreDropdownRef}>
-              <button onClick={() => toggleDropdown('score')} className="flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 font-semibold text-sm transition-colors min-w-[120px]">
+              <button onClick={() => toggleDropdown('score')} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg min-w-[120px]">
                 CADD Score <ChevronDown className="h-4 w-4 ml-2" />
               </button>
+
               {activeDropdown === 'score' && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-                   <button onClick={() => handleSort('caddScore')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                     <ArrowUp className="h-4 w-4" /> Low to High {sortConfig.key === 'caddScore' && sortConfig.direction === 'asc' && <Check className="h-4 w-4 text-orange-500 ml-auto" />}
+                <div className="absolute top-full mt-2 w-48 bg-white rounded-xl shadow-lg border py-1 z-50">
+                  <button onClick={() => handleSort('caddScore')} className="w-full px-4 py-2 flex gap-2 text-sm">
+                    <ArrowUp className="h-4 w-4" /> Low to High
                   </button>
-                  <button onClick={() => { setSortConfig({ key: 'caddScore', direction: 'desc' }); setActiveDropdown(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                     <ArrowDown className="h-4 w-4" /> High to Low {sortConfig.key === 'caddScore' && sortConfig.direction === 'desc' && <Check className="h-4 w-4 text-orange-500 ml-auto" />}
+
+                  <button onClick={() => { setSortConfig({ key: 'caddScore', direction: 'desc' }); setActiveDropdown(null); }} className="w-full px-4 py-2 flex gap-2 text-sm">
+                    <ArrowDown className="h-4 w-4" /> High to Low
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Apply Filters (Orange) */}
-            <button className="px-6 py-3 bg-[#F97316] hover:bg-orange-600 text-white rounded-lg font-semibold text-sm transition-colors shadow-sm">
+            <button className="px-6 py-3 bg-[#F97316] text-white rounded-lg font-semibold shadow-sm">
               Apply Filters
             </button>
+
           </div>
         </div>
 
-        {/* --- Table --- */}
+        {/* TABLE */}
         <div className="overflow-x-auto flex-grow border-t border-gray-100">
-          <table className="w-full text-left border-collapse min-w-[1100px]">
+          <table className="w-full min-w-[1100px] border-collapse text-left">
             <thead>
               <tr>
-                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer group" onClick={() => handleSort('name')}>
-                  <div className="flex items-center gap-1">NAME <ArrowUpDown className={`h-3 w-3 ${sortConfig.key === 'name' ? 'text-orange-500' : 'text-gray-300 group-hover:text-gray-400'}`} /></div>
+                <th onClick={() => handleSort('name')} className="px-6 py-5 text-xs font-bold cursor-pointer">
+                  <div className="flex items-center gap-1">
+                    NAME <ArrowUpDown className="h-3 w-3" />
+                  </div>
                 </th>
-                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider">COURSES</th>
-                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer group" onClick={() => handleSort('caddScore')}>
-                  <div className="flex items-center gap-1">CADD SCORE <ArrowUpDown className={`h-3 w-3 ${sortConfig.key === 'caddScore' ? 'text-orange-500' : 'text-gray-300 group-hover:text-gray-400'}`} /></div>
+                <th className="px-6 py-5 text-xs font-bold">COURSES</th>
+                <th onClick={() => handleSort('caddScore')} className="px-6 py-5 text-xs font-bold cursor-pointer">
+                  <div className="flex items-center gap-1">
+                    CADD SCORE <ArrowUpDown className="h-3 w-3" />
+                  </div>
                 </th>
-                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider w-[350px]">SKILLSET</th>
-                <th className="px-6 py-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">ACTIONS</th>
+                <th className="px-6 py-5 text-xs font-bold w-[350px]">SKILLSET</th>
+                <th className="px-6 py-5 text-xs font-bold text-right">ACTIONS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+
+            <tbody className="divide-y">
               {paginatedData.length > 0 ? (
                 paginatedData.map((candidate) => {
                   const visibleSkills = candidate.skills.slice(0, 4);
                   const remainingSkillsCount = candidate.skills.length - 4;
 
                   return (
-                    <tr key={candidate.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-5 whitespace-nowrap">
+                    <tr key={candidate.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-5">
                         <div className="flex items-center">
-                          <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-sm">
+                          <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold">
                             {candidate.avatarInitials}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-bold text-gray-900">{candidate.name}</div>
-                            <div className="text-xs text-gray-400 mt-0.5">{candidate.id}</div>
+                            <div className="font-bold">{candidate.name}</div>
+                            <div className="text-xs text-gray-400">{candidate.id}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-600">{candidate.course}</td>
-                      <td className="px-6 py-5 whitespace-nowrap text-sm font-medium text-gray-600">{candidate.caddScore}%</td>
+
+                      <td className="px-6 py-5">{candidate.course}</td>
+
+                      <td className="px-6 py-5 font-medium">{candidate.caddScore}%</td>
+
                       <td className="px-6 py-5">
-                        <div className="flex flex-wrap items-center">
-                          {visibleSkills.map(skill => <SkillBadge key={skill} skill={skill} />)}
-                          {remainingSkillsCount > 0 && <span className="text-xs font-bold text-orange-500 mb-2 ml-1">+{remainingSkillsCount} more</span>}
+                        <div className="flex flex-wrap">
+                          {visibleSkills.map(skill => (
+                            <SkillBadge key={skill} skill={skill} />
+                          ))}
+                          {remainingSkillsCount > 0 && (
+                            <span className="text-xs font-bold text-orange-500">
+                              +{remainingSkillsCount} more
+                            </span>
+                          )}
                         </div>
                       </td>
-                      <td className="px-6 py-5 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-4">
-                            <button onClick={() => setModalState({ isOpen: true, type: 'view', candidate })} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <Eye size={20} />
-                            </button>
-                            {/* <button 
-                                onClick={() => setModalState({ isOpen: true, type: 'download', candidate })}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition-colors"
-                            >
-                                <Download size={16} /> Resume
-                            </button> */}
-                        </div>
+
+                      <td className="px-6 py-5 text-right">
+                        <button onClick={() => setModalState({ isOpen: true, type: 'view', candidate })} className="text-gray-400 hover:text-gray-600">
+                          <Eye size={20} />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -366,8 +391,7 @@ const scoreDropdownRef = useRef<HTMLDivElement | null>(null);
               ) : (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    <p>No candidates found matching your filters.</p>
-                    <button onClick={() => { setStatusFilter('All'); setCourseFilter('All'); setSearchQuery(''); }} className="mt-2 text-orange-500 hover:text-orange-600 font-medium">Clear all filters</button>
+                    No candidates found.
                   </td>
                 </tr>
               )}
@@ -375,69 +399,61 @@ const scoreDropdownRef = useRef<HTMLDivElement | null>(null);
           </table>
         </div>
 
-        {/* --- Footer & Pagination --- */}
-        <div className="px-6 py-6 flex items-center justify-between border-t border-gray-100">
+        {/* PAGINATION */}
+        <div className="px-6 py-6 flex items-center justify-between border-t">
           <div className="text-sm text-gray-500">
-            Showing <span className="font-bold text-gray-900">{paginatedData.length > 0 ? startIndex + 1 : 0}</span> to <span className="font-bold text-gray-900">{Math.min(startIndex + itemsPerPage, sortedData.length)}</span> of <span className="font-bold text-gray-900">{sortedData.length}</span> results
+            Showing {paginatedData.length ? startIndex + 1 : 0} to {Math.min(startIndex + itemsPerPage, sortedData.length)} of {sortedData.length}
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                <ChevronLeft className="h-4 w-4" />
+            <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 bg-gray-100 rounded-lg disabled:opacity-50">
+              <ChevronLeft className="h-4 w-4" />
             </button>
 
-            <div className="flex gap-2">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let p = i + 1;
-                  if (totalPages > 5) {
-                    if (currentPage > 3) p = currentPage - 2 + i;
-                    if (p > totalPages) p = totalPages - (4 - i);
-                    if (p < 1) p = 1;
-                  }
-                  
-                  return (
-                    <button key={p} onClick={() => setCurrentPage(p)} className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors font-bold text-sm ${currentPage === p ? 'bg-[#F97316] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}>
-                      {p}
-                    </button>
-                  );
-              })}
-            </div>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let p = i + 1;
+              if (totalPages > 5) {
+                if (currentPage > 3) p = currentPage - 2 + i;
+                if (p > totalPages) p = totalPages - (4 - i);
+                if (p < 1) p = 1;
+              }
+              return (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-9 h-9 rounded-lg ${currentPage === p ? 'bg-orange-500 text-white' : 'hover:bg-gray-100'}`}
+                >
+                  {p}
+                </button>
+              );
+            })}
 
-            <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                <ChevronRight className="h-4 w-4" />
+            <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="p-2 bg-gray-100 rounded-lg disabled:opacity-50">
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
+
       </div>
 
-      {/* --- Active Modal Rendering --- */}
+      {/* MODAL */}
       {modalState.isOpen && modalState.candidate && (
         <Modal
           isOpen={modalState.isOpen}
           onClose={() => setModalState({ isOpen: false, type: null, candidate: null })}
-          title={modalState.type === 'view' ? 'Candidate Profile' : 'Download Resume'}
+          title="Candidate Profile"
         >
-           <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-4">
-                   <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xl">
-                      {modalState.candidate.avatarInitials}
-                   </div>
-                   <div>
-                      <h4 className="text-lg font-bold text-gray-900">{modalState.candidate.name}</h4>
-                      <p className="text-gray-500">{modalState.candidate.id}</p>
-                      <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                        {modalState.candidate.course}
-                      </div>
-                   </div>
-                </div>
-                {modalState.type === 'download' && (
-                  <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-center">
-                    <FileText size={32} className="text-orange-300 mx-auto mb-2" />
-                     <p className="text-sm text-gray-600">Preparing download for...</p>
-                     <p className="text-sm font-semibold text-gray-900">resume_{modalState.candidate.id}.pdf</p>
-                  </div>
-                )}
-           </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xl">
+                {modalState.candidate.avatarInitials}
+              </div>
+              <div>
+                <h4 className="text-lg font-bold">{modalState.candidate.name}</h4>
+                <p className="text-gray-500">{modalState.candidate.id}</p>
+              </div>
+            </div>
+          </div>
         </Modal>
       )}
 
