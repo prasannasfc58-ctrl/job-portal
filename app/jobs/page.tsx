@@ -74,7 +74,7 @@ export default function JobsStaticPage() {
 
     const hasReloaded = sessionStorage.getItem("jobsReloaded");
   console.log("enter",hasReloaded);
-    if (hasReloaded == "false") {
+    if (hasReloaded == "false"|| !hasReloaded ) {
       console.log("enter");
       
       sessionStorage.setItem("jobsReloaded", "true");

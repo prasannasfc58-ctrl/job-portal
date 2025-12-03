@@ -1,4 +1,6 @@
 "use client"
+
+import CompanyCandidate from "@/components/candidatetable";
 import { useEffect } from "react";
 
 export default function CompanyHome() {
@@ -17,7 +19,7 @@ export default function CompanyHome() {
   return (
     <div>
       <h1 className="text-3xl font-bold">Company Dashboard</h1>
-      <p className="text-gray-600">Overview of candidates and job activity.</p>
+     <CompanyCandidate/>
     </div>
   );
 }

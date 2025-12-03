@@ -1,12 +1,23 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function LoginPage({ setRole }: { setRole?: (role: "student" | "company" | null) => void }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+ useEffect(() => {
 
+    const hasReloaded = sessionStorage.getItem("login");
+  console.log("enter",hasReloaded);
+    if (hasReloaded == "false"|| !hasReloaded ) {
+      console.log("enter");
+      
+      sessionStorage.setItem("login", "true");
+      window.location.reload();
+ // reload only once
+    }
+  }, []);
   const handleLogin = () => {
     let role: "student" | "company" | null = null;
 
