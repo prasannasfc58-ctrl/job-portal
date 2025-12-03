@@ -1,5 +1,14 @@
 "use client";
 import { useRouter } from "next/navigation";
+  import {
+  Briefcase,          // Job Portal
+  User,               // My Profile
+  Lock,               // Privacy Policy
+  BookOpen,           // My Courses
+  Phone   ,
+  LogOut   ,Users          // Contact Us
+} from "lucide-react";
+
 
 type SidebarProps = {
   role: "student" | "company" | null;
@@ -20,7 +29,7 @@ export default function Sidebar({ role }: SidebarProps) {
   if (!role) return null;
 
   return (
-    <aside className="w-64 h-screen fixed bg-white shadow-lg border-r p-6">
+    <aside className="w-64 h-screen fixed bg-white shadow-lg border-r border-gray-200 p-6">
       <div className="flex items-center justify-center gap-3 mb-10">
         <hr className="text-gray-400"></hr>
          <img
@@ -32,16 +41,76 @@ export default function Sidebar({ role }: SidebarProps) {
       </div>
 
       {role === "student" ? (
-        <nav className="space-y-3">
-          <a href="/student" className="block p-3 rounded-lg hover:bg-orange-100">🏫 Job Portal</a>
-          <button onClick={handleLogout} className="w-full text-left p-3 rounded-lg hover:bg-red-100">🔐 Logout</button>
-        </nav>
+      
+
+<nav className="space-y-2 text-gray-700">
+
+
+  <a href="/profile" className="flex items-center gap-2 p-3 rounded-lg hover:bg-orange-100">
+    <User size={18} />
+    <span>My Profile</span>
+  </a>
+
+  <a href="/privacy-policy" className="flex items-center gap-2 p-3 rounded-lg hover:bg-orange-100">
+    <Lock size={18} />
+    <span>Privacy Policy</span>
+  </a>
+
+  <a href="/my-courses" className="flex items-center gap-2 p-3 rounded-lg hover:bg-orange-100">
+    <BookOpen size={18} />
+    <span>My Courses</span>
+  </a>
+
+  <a href="/jobs" className="flex items-center gap-2 p-3 rounded-lg hover:bg-orange-100">
+    <Briefcase size={18} />
+    <span>Job Portal</span>
+  </a>
+  <a href="/contact-us" className="flex items-center gap-2 p-3 rounded-lg hover:bg-orange-100">
+    <Phone size={18} />
+    <span>Contact Us</span>
+  </a>
+
+  <button
+    onClick={handleLogout}
+    className="flex items-center gap-2 w-full p-3 rounded-lg hover:bg-red-100 text-left text-red-700"
+  >
+    <Lock size={18} />
+    <span>Logout</span>
+  </button>
+
+</nav>
+
       ) : (
-        <nav className="space-y-3">
-          <a href="/company" className="block p-3 rounded-lg hover:bg-orange-100">👥 Candidates</a>
-          <a href="/jobPosting" className="block p-3 rounded-lg hover:bg-orange-100">💼 Jobs Post</a>
-          <button onClick={handleLogout} className="w-full text-left p-3 rounded-lg hover:bg-red-100">🔐 Logout</button>
-        </nav>
+       
+
+<nav className="space-y-3 text-gray-800">
+
+  <a
+    href="/company"
+    className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-100 transition"
+  >
+    <Users size={20} />
+    <span>Candidates</span>
+  </a>
+
+  <a
+    href="/jobPosting"
+    className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-100 transition"
+  >
+    <Briefcase size={20} />
+    <span>Jobs Post</span>
+  </a>
+
+  <button
+    onClick={handleLogout}
+    className="flex items-center gap-3 w-full text-left p-3 rounded-lg hover:bg-red-100 text-red-700 transition"
+  >
+    <LogOut size={20} />
+    <span>Logout</span>
+  </button>
+
+</nav>
+
       )}
     </aside>
   );

@@ -16,7 +16,7 @@ export default async function RootLayout({ children }: any) {
   const showSidebar = currentPath !== "/login";
 return (
     <html lang="en">
-      <body className="min-h-screen flex bg-gray-100">
+      <body className="min-h-screen flex bg-white">
         {showSidebar && (
           <div className="w-64 block">
             <Sidebar role={role} />

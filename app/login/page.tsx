@@ -40,9 +40,18 @@ export default function LoginPage({ setRole }: { setRole?: (role: "student" | "c
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
+    <div className="flex items-center justify-center h-screen bg-white mr-40">
       <div className="bg-white p-8 shadow-lg rounded-lg w-96">
-        <h2 className="text-2xl font-bold mb-5 text-center">Login</h2>
+         <div className="flex items-center justify-center gap-3 mb-10">
+        <hr className="text-gray-400"></hr>
+         <img
+                                           src="/cadd.png"
+                                            alt="CADD Centre"
+                                            width={120}
+                                            height={70}
+                                            className="mx-auto mb-2"/>
+      </div>
+        <h2 className="text-2xl font-bold text-gray-600 mb-5 text-center">Login</h2>
 
         <input
           className="w-full p-3 border rounded mb-3"
