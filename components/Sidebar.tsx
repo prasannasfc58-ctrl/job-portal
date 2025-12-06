@@ -86,7 +86,7 @@ export default function Sidebar({ role }: SidebarProps) {
 <nav className="space-y-3 text-gray-800">
 
   <a
-    href="/company"
+    href="/company-list"
     className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-100 transition"
   >
     <Users size={20} />
@@ -94,7 +94,7 @@ export default function Sidebar({ role }: SidebarProps) {
   </a>
 
   <a
-    href="/jobPosting"
+    href="/company"
     className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-100 transition"
   >
     <Briefcase size={20} />
