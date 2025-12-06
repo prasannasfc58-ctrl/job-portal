@@ -144,7 +144,7 @@ export default function CompanyCandidate() {
   const [courseFilter, setCourseFilter] = useState<string>('All');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Candidate | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 5;
 
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -192,9 +192,11 @@ useOnClickOutside(scoreDropdownRef, () => {
   const sortedData = useMemo(() => {
     if (!sortConfig.key) return filteredData;
     return [...filteredData].sort((a, b) => {
-      //@ts-ignore
+ // @ts-expect-error TS2345: value may be undefined
+
       const aValue = a[sortConfig.key];
-      //@ts-ignore
+   // @ts-expect-error TS2345: value may be undefined
+
       const bValue = b[sortConfig.key];
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -206,7 +208,13 @@ useOnClickOutside(scoreDropdownRef, () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
 
-  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter, courseFilter]);
+useEffect(() => {
+  // Only update if currentPage is not already 1
+  if (currentPage !== 1) {
+    setTimeout(() => setCurrentPage(1), 0);
+  }
+}, [searchQuery, statusFilter, courseFilter]);
+
 
   const handleSort = (key: keyof Candidate) => {
     let direction: 'asc' | 'desc' = 'asc';

@@ -437,7 +437,7 @@ export default function JobPosting() {
   const [data, setData] = useState<JobPosting[]>(INITIAL_JOBS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 5;
 
   // Filters

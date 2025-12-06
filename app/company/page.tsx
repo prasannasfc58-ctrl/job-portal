@@ -1,6 +1,7 @@
 "use client";
 import { Briefcase, Hourglass, Plus, Users, XCircle, Search, MapPin, ChevronDown } from "lucide-react";
 import React, { useEffect } from "react";
+import Image from "next/image";
 
 interface Job {
   id: number;
@@ -200,12 +201,15 @@ export default function JobPosts() {
   {job.applicants > 0 ? (
     <div className="flex items-center -space-x-2">
       {job.avatars?.slice(0, 3).map((avatar, i) => (
-        <img
-          key={i}
-          className="h-8 w-8 rounded-full border-2 border-white"
-          src={avatar}
-          alt={`applicant ${i + 1}`}
-        />
+       <Image
+  key={i}
+  className="h-8 w-8 rounded-full border-2 border-white"
+  src={avatar}
+  alt={`applicant ${i + 1}`}
+  width={32}       // h-8 = 32px
+  height={32}      // w-8 = 32px
+  priority={true}  // optional: if these avatars are above the fold
+/>
       ))}
 
       {job.applicants > 3 && (

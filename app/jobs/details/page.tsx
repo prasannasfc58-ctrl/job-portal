@@ -3,7 +3,6 @@
 import React from "react";
 import { useSearchParams } from "next/navigation";
 
-import { ListChecks, Building } from "lucide-react";
 import JobDetailsHeader from "@/components/JobDetailsHeader"; 
 
 import JobDetailsSidebar from "@/components/JobDetailsSidebar.tsx";

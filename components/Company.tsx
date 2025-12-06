@@ -168,7 +168,7 @@ export default function CandidateTableWidget() {
   const [sortConfig, setSortConfig] = useState<{ key: keyof Candidate | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
 
   // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 5;
 
   // UI State
@@ -224,9 +224,13 @@ export default function CandidateTableWidget() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, courseFilter]);
+ useEffect(() => {
+  // Only update if currentPage is not already 1
+  if (currentPage !== 1) {
+    setTimeout(() => setCurrentPage(1), 0);
+  }
+}, [searchQuery, statusFilter, courseFilter]);
+
 
   // --- Handlers ---
 
@@ -592,7 +596,7 @@ export default function CandidateTableWidget() {
                    </div>
                    <div>
                      <p className="text-gray-900 font-medium">Are you sure you want to delete {modalState.candidate.name}?</p>
-                     <p className="text-gray-500 text-sm mt-1">This action cannot be undone. This will permanently remove the candidate's data.</p>
+                     <p className="text-gray-500 text-sm mt-1">This action cannot be undone. This will permanently remove the candidates data.</p>
                    </div>
                 </div>
               ) : (

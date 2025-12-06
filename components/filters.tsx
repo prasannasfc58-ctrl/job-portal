@@ -17,8 +17,9 @@ interface FiltersProps {
     courseFilter: string;
     setCourseFilter: (value: string) => void;
     allCourses: string[];
-    skillPercentageFilter: number[];
-    setSkillPercentageFilter: (value: number[]) => void;
+skillPercentageFilter: [number, number];
+setSkillPercentageFilter: React.Dispatch<React.SetStateAction<[number, number]>>;
+
 }
 
 export function Filters({
@@ -83,7 +84,9 @@ export function Filters({
                     min={0}
                     max={100}
                     step={1}
-                    onValueChange={(value) => setSkillPercentageFilter(value)}
+                   onValueChange={(value) =>
+  setSkillPercentageFilter(value as [number, number])
+}
                     className="mt-1 pt-2"
                 />
             </div>

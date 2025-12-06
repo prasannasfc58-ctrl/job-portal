@@ -68,7 +68,7 @@ const STATIC_JOBS = {
 };
 
 export default function JobsStaticPage() {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const jobs = STATIC_JOBS.jobs;
  useEffect(() => {
 
