@@ -1,13 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  Briefcase,
-  Wallet,
-  MapPin,
-  FileText,
-  Clock,
-} from "lucide-react";
+import { Briefcase, Wallet, MapPin, FileText, Clock } from "lucide-react";
+import { useMemo } from "react";
 
 export default function JobCard({ jobDetails, cardSize }: any) {
   const router = useRouter();
@@ -15,7 +10,7 @@ export default function JobCard({ jobDetails, cardSize }: any) {
   // Redirect to job details page with static data
   const openDetails = () => {
     router.push(
-      `/jobs/details?object=${encodeURIComponent(
+      `/student/details?object=${encodeURIComponent(
         JSON.stringify({ jobDetails })
       )}`
     );
@@ -31,6 +26,21 @@ export default function JobCard({ jobDetails, cardSize }: any) {
 
   const skills = jobDetails?.keySkills?.slice(0, 4);
 
+  // 🔥 Random Score (0–100) — stays stable per card
+  const randomScore = useMemo(() => Math.floor(Math.random() * 101), []);
+
+  // 🔥 Random Green Shades
+  const greenColors = ["#15803D"];
+  const randomGreen = useMemo(
+    () => greenColors[Math.floor(Math.random() * greenColors.length)],
+    []
+  );
+
+  // 🔥 Circular Progress Calculations
+  const radius = 16;
+  const circumference = 2 * Math.PI * radius;
+  const strokeOffset = circumference - (randomScore / 100) * circumference;
+
   return (
     <div
       onClick={openDetails}
@@ -38,7 +48,7 @@ export default function JobCard({ jobDetails, cardSize }: any) {
     >
       {/* Header */}
       <div className="flex justify-between items-center">
-        {/* Job title + company */}
+        {/* Left: Job title + company */}
         <div>
           <div className="font-bold text-[#505050] text-[16px] pb-[5px]">
             {jobDetails?.name}
@@ -51,13 +61,46 @@ export default function JobCard({ jobDetails, cardSize }: any) {
           )}
         </div>
 
-        {/* Posted */}
-        {cardSize && (
-          <div className="flex items-center text-gray-700 text-sm">
-            <Clock size={15} className="mr-1" />
-            Posted: {postedString} ago
+        {/* Right: Posted + Score */}
+        <div className="flex items-center gap-4">
+          {/* Posted */}
+          {cardSize && (
+            <div className="flex items-center text-gray-700 text-sm">
+              <Clock size={15} className="mr-1" />
+              Posted: {postedString} ago
+            </div>
+          )}
+
+          {/* Score Chart */}
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <svg className="w-full h-full rotate-[-90deg]">
+              <circle
+                cx="50%"
+                cy="50%"
+                r={radius}
+                stroke="#e5e7eb"
+                strokeWidth="4"
+                fill="none"
+              />
+              <circle
+                cx="50%"
+                cy="50%"
+                r={radius}
+                stroke={randomGreen}
+                strokeWidth="4"
+                fill="none"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeOffset}
+                strokeLinecap="round"
+              />
+            </svg>
+
+            {/* Score Text */}
+            <span className="absolute text-xs font-bold text-gray-700">
+              {randomScore}%
+            </span>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Description */}
@@ -74,7 +117,7 @@ export default function JobCard({ jobDetails, cardSize }: any) {
           {skills.map((skill: string, i: number) => (
             <span
               key={i}
-              className="px-2 py-1 bg-orange-400 text-white 0 rounded text-xs"
+              className="px-2 py-1 bg-orange-400 text-white rounded text-xs"
             >
               {skill}
             </span>

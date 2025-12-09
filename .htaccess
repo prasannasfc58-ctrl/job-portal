@@ -1,0 +1,56 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /job/
+
+# Security header
+<IfModule mod_headers.c>
+  Header set Permissions-Policy "camera=(self), microphone=(self)"
+</IfModule>
+
+# Allow API requests
+RewriteCond %{REQUEST_URI} ^/job/api/ [NC]
+RewriteRule ^ - [L]
+
+# Skip if file or directory exists
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Rewrite to .html
+RewriteRule ^(.+)$ /job/$1.html [L]
+
+# Custom 404
+ErrorDocument 404 /job/404.html
+</IfModule>
+
+<IfModule mod_headers.c>
+
+  # Disable caching for HTML
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+  </FilesMatch>
+
+  # Disable caching for JS + CSS
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+  </FilesMatch>
+
+  # Disable caching for images
+  <FilesMatch "\.(jpg|jpeg|png|gif|svg|webp)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+  </FilesMatch>
+
+  # Disable caching for fonts
+  <FilesMatch "\.(ttf|woff|woff2|eot)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+  </FilesMatch>
+
+</IfModule>

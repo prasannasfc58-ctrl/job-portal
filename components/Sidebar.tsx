@@ -61,7 +61,7 @@ export default function Sidebar({ role }: SidebarProps) {
     <span>My Courses</span>
   </a>
 
-  <a href="/jobs" className="flex items-center gap-2 p-3 rounded-lg hover:bg-orange-100">
+  <a href="/student" className="flex items-center gap-2 p-3 rounded-lg hover:bg-orange-100">
     <Briefcase size={18} />
     <span>Job Portal</span>
   </a>
@@ -94,7 +94,7 @@ export default function Sidebar({ role }: SidebarProps) {
   </a>
 
   <a
-    href="/company"
+    href="/recruitment"
     className="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-100 transition"
   >
     <Briefcase size={20} />

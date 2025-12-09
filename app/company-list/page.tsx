@@ -19,6 +19,8 @@ import { EditStatusDialog } from "@/components/edit-status-dialog";
 import { EmployeeTable } from "@/components/employee-table";
 import { CandidateDetails } from "@/components/candidate-details";
 import { Filters } from "@/components/filters";
+import { FaArrowLeft } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 const allCourses = Array.from(
   new Set(initialCandidates.flatMap((c) => c.courses))
@@ -32,7 +34,7 @@ export default function TalentTrackClientPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [skillPercentageFilter, setSkillPercentageFilter] = useState<[number, number]>([0, 100]);
   const [courseFilter, setCourseFilter] = useState("All");
-
+  const router = useRouter();
   const [confirmation, setConfirmation] = useState<{
     isOpen: boolean;
     candidateId: string;
@@ -124,6 +126,12 @@ export default function TalentTrackClientPage() {
   return (
     <>
       <div className="flex h-screen bg-background">
+         <button
+    className="flex flex-row gap-1.5 cursor-pointer mb-4 hover:text-blue-500"
+    onClick={() => router.push('/recruitment')}
+  >
+    <FaArrowLeft style={{ fontSize: '20px' }} />
+  </button>
         <div className="flex-1 flex flex-col">
           <div className="flex flex-1 overflow-hidden">
             <main className="flex-1 p-2 md:p-6 flex flex-col">

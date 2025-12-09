@@ -92,7 +92,11 @@ export default function JobsStaticPage() {
         </h3>
 
         <div className="space-y-3 text-gray-500">
-        <FilterComponent/>
+        <FilterComponent filters={STATIC_JOBS.jobs} onToggleFilter={function (key: "salaryRanges" | "workModes" | "experienceLevels" | "jobTypes" | "locations", value: string): void {
+            throw new Error("Function not implemented.");
+          } } onClear={function (): void {
+            throw new Error("Function not implemented.");
+          } }/>
         </div>
       </aside>
 
@@ -152,69 +156,7 @@ export default function JobsStaticPage() {
         </div>
 
       
-<div className="flex flex-col items-center justify-center rounded-xl bg-white shadow-lg p-6 text-center gap-4 mt-5 ">
 
-  {/* Title */}
-  <div className="flex flex-col items-center gap-2">
-    <h1 className="text-lg font-bold text-gray-800">Your CADD Score</h1>
-    <p className="text-sm text-gray-500">Based on recent activity.</p>
-  </div>
-
-  {/* Circular Score */}
-  <div className="relative flex h-32 w-32 items-center justify-center">
-    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100">
-      <circle
-        className="stroke-current text-gray-200"
-        cx="50"
-        cy="50"
-        fill="transparent"
-        r="46"
-        strokeWidth="8"
-      ></circle>
-
-      {/* Progress ring → orange */}
-      <circle
-        className="stroke-current text-green-800"
-        cx="50"
-        cy="50"
-        fill="transparent"
-        r="46"
-        strokeDasharray="289.027"
-        strokeDashoffset="63.585"
-        strokeLinecap="round"
-        strokeWidth="8"
-        transform="rotate(-90 50 50)"
-      ></circle>
-    </svg>
-
-    {/* Score Text */}
-    <div className="flex flex-col">
-      <span className="text-4xl font-black leading-none text-gray-900">78</span>
-      <span className="text-xs font-medium text-gray-500">/ 100</span>
-    </div>
-  </div>
-
-  {/* Stats */}
-  <div className="w-full flex flex-col items-center gap-4 pt-2">
-    <div className="w-full divide-y divide-gray-200">
-      <div className="flex justify-between py-2">
-        <span className="text-sm font-medium text-gray-500">Course Completed:</span>
-        <span className="text-sm font-bold text-gray-800">50%</span>
-      </div>
-
-      <div className="flex justify-between py-2">
-        <span className="text-sm font-medium text-gray-500">Your Assessment Score:</span>
-        <span className="text-sm font-bold text-gray-800">38%</span>
-      </div>
-    </div>
-
-    {/* Button → changed to orange */}
-    <button className="flex w-full max-w-[480px] h-10 cursor-pointer items-center justify-center rounded-lg bg-orange-400 text-white text-sm font-bold hover:bg-orange-500 transition-colors">
-      <span className="truncate">Improve Score</span>
-    </button>
-  </div>
-
-</div>
 
       </aside>
     </div>

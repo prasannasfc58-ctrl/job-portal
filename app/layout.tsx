@@ -1,28 +1,23 @@
 import Sidebar from "@/components/Sidebar";
 import "./globals.css";
 import { cookies } from "next/headers";
+import LayoutClient from "@/components/layout-client";
 
-export const metadata = { title: "Portal" };
+
+// export const metadata = { title: "Portal" };
 
 export default async function RootLayout({ children }: any) {
   // Server component: synchronous cookies
-  const cookieStore = await cookies(); // type: ReadonlyRequestCookies
-  const roleCookie = cookieStore.get("role"); // type: Cookie | undefined
-  const role = roleCookie ? (roleCookie.value as "student" | "company") : null;
-  // Get current pathname
-  const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+  // const cookieStore = await cookies(); // type: ReadonlyRequestCookies
+  // const roleCookie = cookieStore.get("role"); // type: Cookie | undefined
+  // const role = roleCookie ? (roleCookie.value as "student" | "company") : null;
 
-  // Render sidebar only if NOT on login page
-  const showSidebar = currentPath !== "/login";
-return (
+  return (
     <html lang="en">
       <body className="min-h-screen flex bg-white">
-        {showSidebar && (
-          <div className="w-64 block">
-            <Sidebar role={role} />
-          </div>
-        )}
-        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+        <LayoutClient>
+          {children}
+        </LayoutClient>
       </body>
     </html>
   );

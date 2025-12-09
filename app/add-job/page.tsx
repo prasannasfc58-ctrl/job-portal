@@ -9,7 +9,7 @@ export default function EditJobForm() {
   const router = useRouter();
 
   const handleCancel = () => {
-    router.push("/company");
+    router.push("/recruitment");
   };
 
   const handleUpdate = () => {
@@ -17,11 +17,11 @@ export default function EditJobForm() {
     if (!confirmPost) return;
 
     alert("Job posted successfully!");
-    router.push("/company");
+    router.push("/recruitment");
   };
 
   const handleBack = () => {
-    router.push("/company");
+    router.push("/recruitment");
   };
 
   return (

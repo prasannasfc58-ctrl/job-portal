@@ -32,7 +32,7 @@ export default function LoginPage() {
 
     // Redirect
     if (role === "student") router.push("/jobs");
-    if (role === "company") router.push("/company");
+    if (role === "company") router.push("/recruitment");
   };
 
   return (

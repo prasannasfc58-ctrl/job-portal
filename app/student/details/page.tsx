@@ -1,37 +1,42 @@
 "use client";
+export const dynamic = "force-dynamic";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-import JobDetailsHeader from "@/components/JobDetailsHeader"; 
-
-import JobDetailsSidebar from "@/components/JobDetailsSidebar.tsx";
-
-
-export default function JobDetailsPage() {
+function JobDetailsContent() {
   const sp = useSearchParams();
   const q = sp.get("object");
-  // parse passed jobDetails object (from JobCard)
+
   const object = q ? JSON.parse(decodeURIComponent(q)) : null;
-  const job: any = object?.jobDetails ;
+  const job: any = object?.jobDetails;
+
+  const JobDetailsHeader = React.lazy(() =>
+    import("@/components/JobDetailsHeader")
+  );
+
+  const JobDetailsSidebar = React.lazy(() =>
+    import("@/components/JobDetailsSidebar")
+  );
 
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-12 gap-6">
-          {/* LEFT: main content (col-span 8) */}
+          
+          {/* LEFT */}
           <div className="col-span-12 lg:col-span-8 space-y-6">
-            {/* Header card */}
-            <JobDetailsHeader job={job} />
+            <Suspense fallback={<div>Loading header...</div>}>
+              <JobDetailsHeader job={job} />
+            </Suspense>
 
-            {/* Job description */}
             <section className="bg-white p-6 rounded-xl shadow-sm space-y-4">
               <h3 className="text-lg font-semibold">Job description</h3>
-              <p className="text-gray-700 leading-relaxed">{job.jobOverview}</p>
+              <p className="text-gray-700 leading-relaxed">{job?.jobOverview}</p>
 
               <div className="pt-3">
                 <h4 className="font-semibold">Role</h4>
-                <p className="text-gray-700">{job.name}</p>
+                <p className="text-gray-700">{job?.name}</p>
               </div>
 
               <div className="pt-3">
@@ -45,7 +50,6 @@ export default function JobDetailsPage() {
               </div>
             </section>
 
-            {/* Eligibility Criteria */}
             <section className="bg-white p-6 rounded-xl shadow-sm space-y-3">
               <h3 className="text-lg font-semibold">Eligibility Criteria</h3>
               <ul className="list-disc ml-5 text-gray-700 space-y-1">
@@ -56,25 +60,33 @@ export default function JobDetailsPage() {
               </ul>
             </section>
 
-            {/* About company */}
             <section className="bg-white p-6 rounded-xl shadow-sm">
               <h3 className="text-lg font-semibold mb-2">About company</h3>
               <p className="text-gray-700">
                 <span className="text-gray-950 font-semibold">Address: </span>
-              Ashar IT Park, 2nd floor,Jayshree Baug, Road No. 16/Z, Wagle Industrial Estate, Thane, Maharashtra 400604
+                Ashar IT Park, 2nd floor, Jayshree Baug, Road No.16/Z,
+                Wagle Industrial Estate, Thane, Maharashtra 400604
               </p>
             </section>
-
-            {/* Similar jobs */}
-            {/* <SimilarJobs /> */}
           </div>
 
-          {/* RIGHT: sidebar (col-span 4) */}
+          {/* RIGHT */}
           <aside className="col-span-12 lg:col-span-4 space-y-4">
-            <JobDetailsSidebar job={job} />
+            <Suspense fallback={<div>Loading sidebar...</div>}>
+              <JobDetailsSidebar job={job} />
+            </Suspense>
           </aside>
+
         </div>
       </div>
     </div>
+  );
+}
+
+export default function JobDetailsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <JobDetailsContent />
+    </Suspense>
   );
 }

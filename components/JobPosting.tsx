@@ -1,845 +1,803 @@
-"use client"
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+"use client";
+
+import React, { useState, KeyboardEvent, useRef } from "react";
+import { FiCalendar } from "react-icons/fi";
+import { FaFileUpload } from "react-icons/fa";
+import { FaUpload } from "react-icons/fa";
+import { FaFilePen } from "react-icons/fa6";
 import {
-  Search,
-  ChevronDown,
-  Eye,
-  Edit2,
-  Trash2,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  X,
-  MapPin,
-  Clock,
-  Briefcase,
-  AlertCircle,
-  Calendar,
-  Send,
-  Save
-} from 'lucide-react';
+  FaTimes,
+  FaPlus,
+  FaCalendarAlt,
+  FaBriefcase,
+  FaArrowLeft,
+} from "react-icons/fa";
+import { FaRegFileAlt } from "react-icons/fa";
+import { TbInfoOctagonFilled, TbListDetails } from "react-icons/tb";
+import { IoMdWarning } from "react-icons/io";
+import { LuCircleCheckBig } from "react-icons/lu";
+import { useRouter } from "next/navigation";
+import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import { IoMdSettings } from "react-icons/io";
+import {
+  IoSettingsOutline,
+  IoShieldCheckmark,
+  IoTimerSharp,
+} from "react-icons/io5";
+import { FaUserTie, FaMapMarkerAlt, FaClipboardList } from "react-icons/fa";
+import { PiListStarBold } from "react-icons/pi";
+import { BsBriefcaseFill } from "react-icons/bs";
+import { MdAttachFile } from "react-icons/md";
+import { FaRupeeSign } from "react-icons/fa";
+import { FaCoins } from "react-icons/fa";
+import { FaMoneyBillAlt } from "react-icons/fa";
 
-// --- Types & Interfaces ---
+import { FaWallet } from "react-icons/fa";
 
-type JobStatus = 'Published' | 'Draft' | 'Closed' | 'On Hold';
-type JobType = 'Full-time' | 'Part-time' | 'Contract' | 'Freelance';
+export default function AddJobPage() {
+  const [skills, setSkills] = useState<string[]>([]);
+  const salaryUnits = ["Thousand", "Lakh", "Crore"];
+  const salaryPeriods = ["Per Month", "Per Annum"];
 
-interface JobPosting {
-  id: string;
-  title: string;
-  location: string;
-  type: JobType;
-  status: JobStatus;
-  deadline: string;
-  applicants: number;
-  // Extra fields for the form
-  description?: string;
-  experienceLevel?: string;
-  skills?: string[];
-  notes?: string;
-}
+  const [skillInput, setSkillInput] = useState<string>("");
+  const [errors, setErrors] = useState<{
+    title?: string;
+    location?: string;
+    description?: string;
+    status?: string;
+    employment?: string;
+    experience?: string;
+    deadline?: string;
+    skills?: string;
+    assessmentTitle?: string;
+    assessmentFile?: string;
+    salaryMin?: string;
+    salaryMax?: string;
+  }>({});
+  const [formData, setFormData] = useState({
+    title: "",
+    location: "",
+    description: "",
+    status: "",
+    employment: "",
+    experience: "",
+    deadline: "",
+    internalNotes: "",
+    assessmentTitle: "",
+    assessmentFile: null as File | null,
+    salaryMin: "",
+    salaryMax: "",
+    workMode:"",
+  });
+  const [isEditMode, setIsEditMode] = useState(false);
+  const router = useRouter();
 
-// --- Mock Data ---
+  const titleRef = useRef<HTMLInputElement>(null);
+ 
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const statusRef = useRef<HTMLSelectElement>(null);
+  const employmentRef = useRef<HTMLSelectElement>(null);
+  const experienceRef = useRef<HTMLSelectElement>(null);
+  const deadlineRef = useRef<HTMLInputElement>(null);
+  const skillsRef = useRef<HTMLDivElement>(null);
+  const assessmentTitleRef = useRef<HTMLInputElement>(null);
+  const assessmentFileRef = useRef<HTMLInputElement>(null);
+  const salaryMinRef = useRef<HTMLInputElement>(null);
+  const salaryMaxRef = useRef<HTMLInputElement>(null);
+const workModeRef = useRef<HTMLSelectElement>(null);
+const locationRef = useRef<HTMLSelectElement>(null);
 
-const INITIAL_JOBS: JobPosting[] = [
-  {
-    id: 'JOB-101',
-    title: 'Senior Frontend Developer',
-    location: 'San Francisco, CA',
-    type: 'Full-time',
-    status: 'Published',
-    deadline: '2024-08-15',
-    applicants: 42,
-    description: 'We are looking for an experienced Frontend Developer...',
-    skills: ['React', 'TypeScript', 'Tailwind'],
-  },
-  {
-    id: 'JOB-102',
-    title: 'Product Manager',
-    location: 'New York, NY',
-    type: 'Full-time',
-    status: 'Draft',
-    deadline: '2024-09-01',
-    applicants: 0,
-    skills: ['Agile', 'Jira', 'Product Strategy'],
-  },
-  {
-    id: 'JOB-103',
-    title: 'UX/UI Designer',
-    location: 'Remote',
-    type: 'Contract',
-    status: 'Closed',
-    deadline: '2024-07-30',
-    applicants: 153,
-    skills: ['Figma', 'Sketch', 'Prototyping'],
-  },
-  {
-    id: 'JOB-104',
-    title: 'Data Scientist',
-    location: 'Austin, TX',
-    type: 'Full-time',
-    status: 'On Hold',
-    deadline: '2024-08-10',
-    applicants: 25,
-    skills: ['Python', 'Machine Learning', 'SQL'],
-  },
-  {
-    id: 'JOB-105',
-    title: 'DevOps Engineer',
-    location: 'Chicago, IL',
-    type: 'Part-time',
-    status: 'Published',
-    deadline: '2024-08-20',
-    applicants: 18,
-    skills: ['AWS', 'Docker', 'Kubernetes'],
-  },
-  { id: 'JOB-106', title: 'Marketing Specialist', location: 'London, UK', type: 'Full-time', status: 'Published', deadline: '2024-08-25', applicants: 67 },
-  { id: 'JOB-107', title: 'Sales Representative', location: 'Miami, FL', type: 'Full-time', status: 'Draft', deadline: '2024-09-05', applicants: 0 },
-];
 
-// --- Helper Components ---
 
-const StatusBadge = ({ status }: { status: JobStatus }) => {
-  const styles: Record<JobStatus, string> = {
-    'Published': 'bg-green-100 text-green-700 border border-green-200',
-    'Draft': 'bg-gray-100 text-gray-700 border border-gray-200',
-    'Closed': 'bg-red-100 text-red-700 border border-red-200',
-    'On Hold': 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-  };
+  const [showDialog, setShowDialog] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Creating job post...");
+  const [progress, setProgress] = useState(0);
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${styles[status]}`}>
-      {status}
-    </span>
-  );
-};
-
-// --- Form Components ---
-
-interface CreateJobFormProps {
-  onClose: () => void;
-  onSave: (job: JobPosting) => void;
-  initialData?: JobPosting | null;
-}
-
-const CreateJobForm = ({ onClose, onSave, initialData }: CreateJobFormProps) => {
-  // Form State
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [location, setLocation] = useState(initialData?.location || '');
-  const [description, setDescription] = useState(initialData?.description || '');
-  const [type, setType] = useState<JobType>(initialData?.type || 'Full-time');
-  const [status, setStatus] = useState<JobStatus>(initialData?.status || 'Draft'); // State for status editing
-  const [experienceLevel, setExperienceLevel] = useState(initialData?.experienceLevel || 'Entry-level');
-  const [deadline, setDeadline] = useState(initialData?.deadline || '');
-  const [skills, setSkills] = useState<string[]>(initialData?.skills || ['JavaScript', 'React', 'Tailwind CSS']);
-  const [notes, setNotes] = useState(initialData?.notes || '');
-  
-  // Local UI State
-  const [newSkill, setNewSkill] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const addSkill = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && newSkill.trim()) {
-      e.preventDefault();
-      if (!skills.includes(newSkill.trim())) {
-        setSkills([...skills, newSkill.trim()]);
-      }
-      setNewSkill('');
+  const addSkill = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && skillInput.trim() !== "") {
+      setSkills([...skills, skillInput.trim()]);
+      setSkillInput("");
     }
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setSkills(skills.filter(skill => skill !== skillToRemove));
+    setSkills(skills.filter((s) => s !== skillToRemove));
+  };
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      location: "",
+      description: "",
+      status: "",
+      employment: "",
+      experience: "",
+      deadline: "",
+      internalNotes: "",
+      assessmentTitle: "",
+      assessmentFile: null,
+      salaryMin: "",
+      salaryMax: "",
+      workMode:"",
+
+    });
+
+    setSkills([]);
+    setSkillInput("");
+    setErrors({});
+    setProgress(0);
   };
 
-  // Status is optional here because if we are in Edit mode, we use the state `status`.
-  // If we are in Create mode, the buttons determine the status ('Draft' or 'Published').
-  const handleSave = (targetStatus?: JobStatus) => {
-    // Basic Validation
-    const newErrors: Record<string, string> = {};
-    if (!title.trim()) newErrors.title = 'Job title is required';
-    if (!location.trim()) newErrors.location = 'Location is required';
-    if (!deadline) newErrors.deadline = 'Deadline is required';
+  const handleSubmit = () => {
+    const newErrors: any = {};
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    // VALIDATION
+    if (!formData.title.trim()) newErrors.title = "Job title is required.";
+  
+    if (!formData.description.trim())
+      newErrors.description = "Description required.";
+    if (!formData.status) newErrors.status = "Select a status.";
+    if (!formData.employment) newErrors.employment = "Select employment type.";
+    if (!formData.experience) newErrors.experience = "Select experience level.";
+    if (!formData.deadline) newErrors.deadline = "Choose a deadline.";
+    if (skills.length === 0) newErrors.skills = "Add at least one skill.";
+    if (!formData.assessmentTitle.trim())
+      newErrors.assessmentTitle = "Assessment title is required.";
+
+    if (!formData.assessmentFile)
+      newErrors.assessmentFile = "Upload an assessment file.";
+    if (!formData.salaryMin.trim())
+      newErrors.salaryMin = "Minimum salary is required.";
+
+    if (!formData.salaryMax.trim())
+      newErrors.salaryMax = "Maximum salary is required.";
+
+    if (
+      formData.salaryMax &&
+      formData.salaryMin &&
+      Number(formData.salaryMax) < Number(formData.salaryMin)
+    )
+      newErrors.salaryMax =
+        "Maximum salary must be greater than minimum salary.";
+if (!formData.workMode) newErrors.workMode = "Select work mode.";
+
+if (!formData.location) newErrors.location = "Select location.";
+
+
+
+    setErrors(newErrors);
+
+    // FIND FIRST ERROR FIELD
+    const firstErrorField = Object.keys(newErrors)[0];
+
+    if (firstErrorField) {
+      const scrollMap: any = {
+        title: titleRef,
+        location: locationRef,
+        description: descriptionRef,
+        status: statusRef,
+        workMode: workModeRef,
+        employment: employmentRef,
+        experience: experienceRef,
+        deadline: deadlineRef,
+        skills: skillsRef,
+        assessmentTitle: assessmentTitleRef,
+        assessmentFile: assessmentFileRef,
+
+        // NEW
+        salaryMin: salaryMinRef,
+        salaryMax: salaryMaxRef,
+      };
+
+
+
+      scrollMap[firstErrorField]?.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      // Snackbar
+      setShowSnackbar(true);
+      setTimeout(() => setShowSnackbar(false), 3000);
       return;
     }
 
-    const finalStatus = targetStatus || status;
-
-    const jobData: JobPosting = {
-      id: initialData?.id || `JOB-${Math.floor(Math.random() * 10000)}`,
-      title,
-      location,
-      type,
-      status: finalStatus,
-      deadline,
-      applicants: initialData?.applicants || 0,
-      description,
-      experienceLevel,
-      skills,
-      notes
+    // --------------------------------------------------------
+    // 🎉 FINAL PAYLOAD — ready to send to backend
+    // --------------------------------------------------------
+    const finalPayload = {
+      ...formData,
+      skills: skills,
+      salaryMin: formData.salaryMin,
+      salaryMax: formData.salaryMax,
     };
 
-    onSave(jobData);
+    console.log("FINAL PAYLOAD:", finalPayload);
+
+    // OPEN DIALOG
+    setShowDialog(true);
+    setLoadingMessage(
+      isEditMode ? "Updating job post..." : "Creating job post..."
+    );
+
+    setProgress(0);
+
+    // Simulate loading progress
+    let value = 0;
+    const interval = setInterval(() => {
+      value += 20;
+      setProgress(value);
+
+      if (value >= 100) {
+        clearInterval(interval);
+        setLoadingMessage(
+          isEditMode ? "Job updated successfully!" : "Job created successfully!"
+        );
+
+        resetForm();
+        // Auto close after 1.5s (optional)
+        setTimeout(() => setShowDialog(false), 1500);
+      }
+    }, 400);
   };
 
   return (
-    <div className="flex flex-col h-full">
-       {/* Form Body - Scrollable */}
-       <div className="flex-grow overflow-y-auto px-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Job Title</label>
-              <input 
-                type="text" 
-                value={title}
-                onChange={(e) => { setTitle(e.target.value); if(errors.title) setErrors({...errors, title: ''}) }}
-                placeholder="e.g., Senior Frontend Developer" 
-                className={`w-full px-4 py-2.5 rounded-lg border ${errors.title ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-orange-500'} focus:ring-2 focus:ring-orange-200 outline-none transition-all text-sm`}
-              />
-              {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Location</label>
-              <input 
-                type="text" 
-                value={location}
-                onChange={(e) => { setLocation(e.target.value); if(errors.location) setErrors({...errors, location: ''}) }}
-                placeholder="e.g., San Francisco, CA or Remote" 
-                className={`w-full px-4 py-2.5 rounded-lg border ${errors.location ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-orange-500'} focus:ring-2 focus:ring-orange-200 outline-none transition-all text-sm`}
-              />
-               {errors.location && <p className="text-xs text-red-500 mt-1">{errors.location}</p>}
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center gap-4 mb-2">
+          <FaArrowLeft
+            onClick={() => router.back()}
+            className="text-gray-700 text-2xl hover:text-gray-500 cursor-pointer transition"
+          />
 
-          <div className="mb-6">
-            <label className="block text-xs font-bold text-gray-700 mb-1.5">Job Description</label>
-            <textarea 
-              rows={5}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the role, responsibilities, and requirements..." 
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-sm resize-none"
+          <h1 className="text-4xl font-bold text-gray-900">
+            {isEditMode ? "Edit Job" : "Add Job"}
+          </h1>
+        </div>
+
+        {/* Description under title */}
+        <p className="text-gray-600 mb-8 ml-10">
+          {isEditMode
+            ? "Update the details of this job posting."
+            : "Enter the details to create a new job posting."}
+        </p>
+
+        <div className="bg-white text-gray-800 rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100 space-y-10">
+          {/* JOB INFORMATION */}
+          <SectionTitle icon={<TbListDetails />} title="Job Information" />
+          <div>
+            <InputField
+              label="Job Title"
+              ref={titleRef}
+              icon={<FaUserTie />}
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              error={errors.title}
             />
+
+            {/* Job Description */}
+            <div className="mt-5">
+              <Label icon={<FaClipboardList />} text="Job Description" />
+              <textarea
+                ref={descriptionRef}
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className={`w-full h-40 mt-2 p-4 border rounded-xl bg-gray-50 
+  ${
+    errors.description
+      ? "border-red-500 focus:ring-red-400"
+      : "border-gray-400 focus:ring-indigo-400"
+  }
+  transition`}
+                placeholder="Write a detailed job description..."
+              ></textarea>
+
+              {errors.description && (
+                <p className="text-sm text-red-500">{errors.description}</p>
+              )}
+            </div>
+          </div>
+          <SectionTitle icon={<IoMdSettings />} title="Job Settings" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* SALARY FIELD: Min / Max / Year */}
+            <div className="flex flex-col">
+              <Label icon={<FaRupeeSign />} text="Salary Range" />
+
+              <div className="mt-2 flex items-center gap-3">
+                {/* Min Salary */}
+                <input
+                  ref={salaryMinRef}
+                  type="number"
+                  placeholder="Min"
+                  value={formData.salaryMin}
+                  onChange={(e) =>
+                    setFormData({ ...formData, salaryMin: e.target.value })
+                  }
+                  className={`w-1/2 p-3 border rounded-xl bg-gray-50 
+        ${
+          errors.salaryMin
+            ? "border-red-500 focus:ring-red-400"
+            : "border-gray-400 focus:ring-indigo-400"
+        }`}
+                />
+
+                <span className="text-gray-600 font-medium">to</span>
+
+                {/* Max Salary */}
+                <input
+                  type="number"
+                  ref={salaryMaxRef}
+                  placeholder="Max"
+                  value={formData.salaryMax}
+                  onChange={(e) =>
+                    setFormData({ ...formData, salaryMax: e.target.value })
+                  }
+                  className={`w-1/2 p-3 border rounded-xl bg-gray-50 
+        ${
+          errors.salaryMax
+            ? "border-red-500 focus:ring-red-400"
+            : "border-gray-400 focus:ring-indigo-400"
+        }`}
+                />
+
+                {/* /Year Label */}
+                <span className="text-gray-700 font-medium whitespace-nowrap">
+                  /Year
+                </span>
+              </div>
+
+              {/* Error Messages */}
+              {(errors.salaryMin || errors.salaryMax) && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.salaryMin || errors.salaryMax}
+                </p>
+              )}
+            </div>
+
+            <SelectField
+              ref={workModeRef}
+              label="Work Mode"
+              icon={<BsBriefcaseFill />}
+              options={["Onsite", "Remote", "Hybrid"]}
+              value={formData.workMode}
+              onChange={(e) =>
+                setFormData({ ...formData, workMode: e.target.value })
+              }
+              // error={errors.workMode}
+            />
+
+            <SelectField
+              ref={employmentRef}
+              label="Employment Type"
+              icon={<BsBriefcaseFill />}
+              options={[
+                "Full-time",
+                "Part-time",
+                "Contract",
+                "Internship",
+                "Freelance",
+              ]}
+              value={formData.employment}
+              onChange={(e) =>
+                setFormData({ ...formData, employment: e.target.value })
+              }
+              error={errors.employment}
+            />
+
+            <SelectField
+              ref={experienceRef}
+              label="Experience Level"
+              icon={<IoTimerSharp />}
+              options={["Fresher", " 1-3 Yrs", "3-5 Yrs", "5+ Yrs"]}
+              value={formData.experience}
+              onChange={(e) =>
+                setFormData({ ...formData, experience: e.target.value })
+              }
+              error={errors.experience}
+            />
+            <SelectField
+              ref={locationRef}
+              label="Location"
+              icon={<FaMapMarkerAlt />}
+              options={["Chennai", "Bangalore", "Hyderabad", "Mumbai", "Delhi"]}
+              value={formData.location}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
+              error={errors.location}
+            />
+
+            <div className="flex flex-col">
+              <Label icon={<FaCalendarAlt />} text="Application Deadline" />
+              <input
+                type="date"
+                ref={deadlineRef}
+                value={formData.deadline}
+                onChange={(e) =>
+                  setFormData({ ...formData, deadline: e.target.value })
+                }
+                className={`mt-2 w-full px-3 py-2.5 border rounded-xl bg-gray-50 
+  ${
+    errors.deadline
+      ? "border-red-500 focus:ring-red-400"
+      : "border-gray-400 focus:ring-indigo-400"
+  }`}
+              />
+
+              {errors.deadline && (
+                <p className="text-sm text-red-500">{errors.deadline}</p>
+              )}
+            </div>
           </div>
 
-          <div className={`grid grid-cols-1 ${initialData ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6 mb-6`}>
-             {/* Only show Status dropdown if editing existing job */}
-            {initialData && (
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Status</label>
-                <div className="relative">
-                  <select 
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as JobStatus)}
-                    className="w-full px-4 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-transparent focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-sm appearance-none font-medium text-gray-700 cursor-pointer"
-                  >
-                    <option value="Published">Published</option>
-                    <option value="Draft">Draft</option>
-                    <option value="On Hold">On Hold</option>
-                    <option value="Closed">Closed</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
+          {/* REQUIRED SKILLS */}
+          <div className="mt-8" ref={skillsRef}>
+            <SectionTitle icon={<PiListStarBold />} title="Required Skills" />
+
+            <input
+              type="text"
+              value={skillInput}
+              onChange={(e) => setSkillInput(e.target.value)}
+              onKeyDown={addSkill}
+              placeholder="Enter a skill and press enter"
+              className={`w-full mb-4 p-3 border border-gray-400 rounded-lg focus:ring-indigo-400 focus:border-indigo-400 transition"
+              ${errors.skills ? "border-red-500" : "border-gray-100"}`}
+            />
+
+            {skills.length !== 0 && (
+              <div className="max-h-40 overflow-y-auto p-3 border border-gray-100 rounded-lg bg-gray-50 shadow-inner">
+                <div className="flex flex-wrap gap-3">
+                  {skills.map((skill, index) => (
+                    <span
+                      key={`${skill}-${index}`}
+                      className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full border border-orange-300 text-sm font-medium flex items-center gap-2"
+                    >
+                      {skill}
+                      <button
+                        onClick={() => removeSkill(skill)}
+                        className="text-orange-600 hover:text-orange-800"
+                      >
+                        <FaTimes />
+                      </button>
+                    </span>
+                  ))}
                 </div>
               </div>
             )}
 
-            <div className={initialData ? 'md:col-span-1' : ''}>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Employment Type</label>
-              <div className="relative">
-                <select 
-                  value={type}
-                  onChange={(e) => setType(e.target.value as JobType)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-transparent focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-sm appearance-none font-medium text-gray-700 cursor-pointer"
-                >
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Freelance">Freelance</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Experience Level</label>
-              <div className="relative">
-                <select 
-                  value={experienceLevel}
-                  onChange={(e) => setExperienceLevel(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-transparent focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-sm appearance-none font-medium text-gray-700 cursor-pointer"
-                >
-                  <option>Entry-level</option>
-                  <option>Mid-level</option>
-                  <option>Senior</option>
-                  <option>Lead</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-500 pointer-events-none" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Application Deadline</label>
-              <div className="relative">
-                <input 
-                  type="date"
-                  value={deadline}
-                  onChange={(e) => { setDeadline(e.target.value); if(errors.deadline) setErrors({...errors, deadline: ''}) }}
-                  className={`w-full px-4 py-2.5 rounded-lg border ${errors.deadline ? 'border-red-300 focus:border-red-500' : 'bg-gray-50 border-transparent hover:bg-gray-100 focus:bg-white focus:border-orange-500'} focus:ring-2 focus:ring-orange-200 outline-none transition-all text-sm text-gray-600 font-medium`}
-                />
-                 {errors.deadline && <p className="text-xs text-red-500 mt-1">{errors.deadline}</p>}
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-6">
-             <label className="block text-xs font-bold text-gray-700 mb-1.5">Required Skills</label>
-             <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-gray-200 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-200 transition-all bg-white min-h-[46px]">
-                {skills.map(skill => (
-                  <span key={skill} className="flex items-center px-2 py-1 rounded bg-orange-50 text-orange-700 text-xs font-medium border border-orange-100">
-                    {skill}
-                    <button onClick={() => removeSkill(skill)} className="ml-1 hover:text-orange-900"><X size={12} /></button>
-                  </span>
-                ))}
-                <input 
-                  type="text" 
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  onKeyDown={addSkill}
-                  placeholder={skills.length === 0 ? "Add a skill..." : ""}
-                  className="flex-grow min-w-[100px] outline-none text-sm bg-transparent"
-                />
-             </div>
-             <p className="text-xs text-gray-400 mt-1.5">Enter skills and press Enter to add them.</p>
-          </div>
-
-          <div className="mb-2">
-            <label className="block text-xs font-bold text-gray-700 mb-1.5">Company-Specific Notes</label>
-            <textarea 
-              rows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Internal notes about this position..." 
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all text-sm resize-none"
-            />
-            <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
-               <Eye size={12} />
-               <span>These notes are for internal use only and will not be visible to applicants.</span>
-            </div>
-          </div>
-       </div>
-
-       {/* Form Footer - Fixed at bottom */}
-       <div className="pt-6 mt-2 border-t border-gray-100 flex items-center justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold text-sm transition-colors">
-            Cancel
-          </button>
-          
-          {initialData ? (
-             <button 
-               onClick={() => handleSave()}
-               className="px-4 py-2.5 bg-[#F97316] hover:bg-orange-600 text-white rounded-lg font-bold text-sm transition-colors flex items-center gap-2 shadow-sm"
-             >
-                <Save size={16} /> Update Job
-             </button>
-          ) : (
-             <>
-               <button 
-                onClick={() => handleSave('Draft')}
-                className="px-4 py-2.5 bg-[#FFF7ED] hover:bg-orange-50 text-orange-700 border border-orange-200 rounded-lg font-bold text-sm transition-colors flex items-center gap-2"
-              >
-                Save Draft
-              </button>
-              <button 
-                onClick={() => handleSave('Published')}
-                className="px-4 py-2.5 bg-[#F97316] hover:bg-orange-600 text-white rounded-lg font-bold text-sm transition-colors flex items-center gap-2 shadow-sm"
-              >
-                 <Send size={16} /> Post Job
-              </button>
-             </>
-          )}
-       </div>
-    </div>
-  );
-};
-
-
-// --- Modal Component ---
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  actions?: React.ReactNode;
-  isDanger?: boolean;
-  maxWidth?: string;
-}
-
-const Modal = ({ isOpen, onClose, title, subtitle, children, actions, isDanger, maxWidth = 'max-w-md' }: ModalProps) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className={`bg-white rounded-xl shadow-2xl w-full ${maxWidth} flex flex-col max-h-[90vh] overflow-hidden transform transition-all scale-100`}>
-        {/* Header */}
-        <div className={`px-6 py-5 border-b ${isDanger ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'} flex items-start justify-between shrink-0`}>
-          <div>
-            <h3 className={`text-xl font-bold ${isDanger ? 'text-red-800' : 'text-gray-900'}`}>{title}</h3>
-            {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100">
-            <X size={20} />
-          </button>
-        </div>
-        
-        {/* Body */}
-        <div className="p-6 overflow-y-auto">
-          {children}
-        </div>
-
-        {/* Footer (Optional - used for simple modals, custom forms have their own footer) */}
-        {actions && (
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 shrink-0">
-            {actions}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// --- Hook for Click Outside ---
-function useOnClickOutside<T extends HTMLElement>(
-  ref: React.RefObject<T | null>,
-  handler: () => void
-) {
-  useEffect(() => {
-    const listener = (event: MouseEvent | TouchEvent) => {
-      if (!ref.current || ref.current.contains(event.target as Node)) return;
-      handler();
-    };
-
-    document.addEventListener("mousedown", listener);
-    document.addEventListener("touchstart", listener);
-
-    return () => {
-      document.removeEventListener("mousedown", listener);
-      document.removeEventListener("touchstart", listener);
-    };
-  }, [ref, handler]);
-}
-
-
-// --- Main Component ---
-
-export default function JobPosting() {
-  const [data, setData] = useState<JobPosting[]>(INITIAL_JOBS);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 5;
-
-  // Filters
-  const [statusFilter, setStatusFilter] = useState<string>('All');
-  const [locationFilter, setLocationFilter] = useState<string>('All');
-  const [typeFilter, setTypeFilter] = useState<string>('All');
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-
-  // Modal State
-  const [modal, setModal] = useState<{
-    isOpen: boolean;
-    type: 'delete' | 'view' | 'edit' | 'add' | 'bulk-delete' | null;
-    job: JobPosting | null;
-  }>({ isOpen: false, type: null, job: null });
-
-  // Refs
-  const statusRef = useRef<HTMLDivElement>(null);
-  const locationRef = useRef<HTMLDivElement>(null);
-  const typeRef = useRef<HTMLDivElement>(null);
-
-  useOnClickOutside(statusRef, () => activeDropdown === 'status' && setActiveDropdown(null));
-  useOnClickOutside(locationRef, () => activeDropdown === 'location' && setActiveDropdown(null));
-  useOnClickOutside(typeRef, () => activeDropdown === 'type' && setActiveDropdown(null));
-
-  // --- Logic ---
-
-  const filteredData = useMemo(() => {
-    return data.filter(job => {
-      const matchesSearch = 
-        job.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        job.location.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || job.status === statusFilter;
-      const matchesLocation = locationFilter === 'All' || job.location.includes(locationFilter);
-      const matchesType = typeFilter === 'All' || job.type === typeFilter;
-      
-      return matchesSearch && matchesStatus && matchesLocation && matchesType;
-    });
-  }, [data, searchQuery, statusFilter, locationFilter, typeFilter]);
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
-
-  const isAllSelected = paginatedData.length > 0 && paginatedData.every(j => selectedIds.has(j.id));
-
-  const uniqueStatuses = ['All', 'Published', 'Draft', 'Closed', 'On Hold'];
-  const uniqueLocations = ['All', 'San Francisco', 'New York', 'Remote', 'Austin', 'Chicago'];
-  const uniqueTypes = ['All', 'Full-time', 'Part-time', 'Contract', 'Freelance'];
-
-  // --- Handlers ---
-
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      const newIds = new Set(selectedIds);
-      paginatedData.forEach(j => newIds.add(j.id));
-      setSelectedIds(newIds);
-    } else {
-      const newIds = new Set(selectedIds);
-      paginatedData.forEach(j => newIds.delete(j.id));
-      setSelectedIds(newIds);
-    }
-  };
-
-  const handleSelectOne = (id: string) => {
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) newSet.delete(id);
-    else newSet.add(id);
-    setSelectedIds(newSet);
-  };
-
-  const handleDelete = () => {
-    if (modal.job) {
-      setData(prev => prev.filter(j => j.id !== modal.job!.id));
-      setModal({ isOpen: false, type: null, job: null });
-    }
-  };
-
-  const handleBulkDelete = () => {
-    setData(prev => prev.filter(j => !selectedIds.has(j.id)));
-    setSelectedIds(new Set());
-    setModal({ isOpen: false, type: null, job: null });
-  };
-
-  const handleSaveJob = (job: JobPosting) => {
-    const isEditing = data.some(j => j.id === job.id);
-    if (isEditing) {
-      setData(prev => prev.map(j => (j.id === job.id ? job : j)));
-    } else {
-      setData(prev => [job, ...prev]);
-    }
-    setModal({ isOpen: false, type: null, job: null });
-  };
-
-  const toggleDropdown = (name: string) => setActiveDropdown(activeDropdown === name ? null : name);
-
-  return (
-    <div className="p-8 bg-gray-50 min-h-screen font-sans text-gray-800 flex justify-center">
-      <div className="w-full max-w-6xl">
-        
-        {/* --- Top Header --- */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Your Job Postings</h1>
-          <div className="flex gap-3">
-            {selectedIds.size > 0 && (
-              <button 
-                onClick={() => setModal({ isOpen: true, type: 'bulk-delete', job: null })}
-                className="flex items-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-semibold text-sm transition-colors shadow-sm"
-              >
-                <Trash2 size={18} /> Delete ({selectedIds.size})
-              </button>
+            {/* Now show validation message OUTSIDE the block */}
+            {errors.skills && (
+              <p className="text-sm text-red-500 mt-1">{errors.skills}</p>
             )}
-            <button 
-              onClick={() => setModal({ isOpen: true, type: 'add', job: null })}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#F97316] hover:bg-orange-600 text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
+          </div>
+
+          {/* ASSESSMENT SECTION */}
+          <div className="mt-10">
+            <SectionTitle icon={<MdAttachFile />} title="Assessment" />
+
+            <div className="flex flex-col gap-5">
+              {/* Assessment Title */}
+              <div>
+                <Label icon={<FaFilePen />} text="Assessment Title" />
+                <input
+                  ref={assessmentTitleRef}
+                  type="text"
+                  value={formData.assessmentTitle}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      assessmentTitle: e.target.value,
+                    })
+                  }
+                  className={`w-full mt-2 p-3 border rounded-xl bg-gray-50 
+        ${
+          errors.assessmentTitle
+            ? "border-red-500 focus:ring-red-400"
+            : "border-gray-400 focus:ring-indigo-400"
+        }`}
+                />
+
+                {errors.assessmentTitle && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.assessmentTitle}
+                  </p>
+                )}
+              </div>
+
+              {/* Assessment File Upload */}
+              {/* Assessment File Upload */}
+              <div>
+                <Label icon={<FaFileUpload />} text="Upload Assessment File" />
+
+                {/* Hidden Native Input */}
+                <input
+                  ref={assessmentFileRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.png"
+                  id="assessmentUpload"
+                  className="hidden"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      assessmentFile: e.target.files?.[0] || null,
+                    })
+                  }
+                />
+
+                {/* Beautiful Dashed Upload Box */}
+                <label
+                  htmlFor="assessmentUpload"
+                  className={`
+      mt-3 w-full flex flex-col items-center justify-center 
+      border-2 border-dashed rounded-xl cursor-pointer p-8
+      transition bg-gray-50 
+      ${
+        errors.assessmentFile
+          ? "border-red-400"
+          : "border-gray-300 hover:bg-gray-100"
+      }
+    `}
+                >
+                  {/* Cloud Upload Icon */}
+                  <div className="text-gray-500 mb-2 text-3xl">
+                    <FaUpload />
+                  </div>
+
+                  {/* Upload Text */}
+                  <p className="text-gray-700 font-medium">
+                    {formData.assessmentFile
+                      ? "Change selected file"
+                      : "Choose a file"}
+                  </p>
+
+                  <p className="text-gray-400 text-sm">
+                    PDF, DOC, JPG, PNG formats, up to 50MB
+                  </p>
+
+                  {/* Browse Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("assessmentUpload")?.click()
+                    }
+                    className=" cursor-pointer mt-4 px-4 py-2 bg-white border border-gray-300 rounded-lg 
+      text-gray-700 font-medium shadow-sm hover:bg-gray-200 transition"
+                  >
+                    Browse File
+                  </button>
+                </label>
+
+                {/* Selected File Chip */}
+                {formData.assessmentFile && (
+                  <div
+                    className="
+        mt-3 inline-flex items-center gap-2 
+        bg-orange-100 text-orange-700 
+        px-3 py-1.5 rounded-full text-sm font-medium
+        border border-orange-300
+      "
+                  >
+                    <FaFileUpload className="text-orange-600" />
+
+                    <span className="truncate max-w-[150px]">
+                      {formData.assessmentFile.name}
+                    </span>
+
+                    {/* Remove File */}
+                    <button
+                      onClick={() =>
+                        setFormData({ ...formData, assessmentFile: null })
+                      }
+                      className="text-orange-700 hover:text-orange-900"
+                    >
+                      <FaTimes size={12} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {errors.assessmentFile && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.assessmentFile}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* INTERNAL NOTES */}
+          <div>
+            <SectionTitle icon={<FaRegFileAlt />} title="Internal Notes" />
+
+            <textarea
+              className="w-full h-32 p-4 border border-gray-400 rounded-xl bg-gray-50  focus:ring-indigo-400"
+              value={formData.internalNotes}
+              onChange={(e) =>
+                setFormData({ ...formData, internalNotes: e.target.value })
+              }
+              placeholder="Internal/reference notes..."
+            ></textarea>
+
+            <div className="flex gap-1 items-center px-5 py-3 text-sm text-yellow-500 mt-3 rounded-xl bg-yellow-50">
+              <TbInfoOctagonFilled />
+              <p>
+                These notes are only for internal HR use and will not be visible
+                to job applicants.
+              </p>
+            </div>
+          </div>
+
+          {/* Submit Buttons */}
+          <div className="flex justify-between items-center mt-8 flex-col sm:flex-row gap-4 sm:gap-0">
+            <button
+              onClick={() => router.back()}
+              className="px-8 py-3 rounded-lg border border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-100 transition font-medium cursor-pointer"
             >
-              <Plus size={18} /> Add New Job
+              Cancel
+            </button>
+
+            <button
+              onClick={handleSubmit}
+              className="flex items-center gap-2 px-8 py-3 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition font-semibold shadow cursor-pointer"
+            >
+              {isEditMode ? (
+                <>
+                  <IoMdCheckmarkCircleOutline className="text-lg font-semibold" />
+                  Update Job Post
+                </>
+              ) : (
+                <>
+                  <FaPlus />
+                  Create Job Post
+                </>
+              )}
             </button>
           </div>
+          {/* Snackbar */}
+          {showSnackbar && (
+            <div className="fixed  flex items-center gap-2 w-80 p-4 top-5 right-5 z-50  bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeIn">
+              <IoMdWarning /> Fill in all the required fields.
+            </div>
+          )}
         </div>
-
-        {/* --- Main Card --- */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          
-          {/* --- Filters Bar --- */}
-          <div className="p-5 flex flex-col md:flex-row gap-4 border-b border-gray-100 bg-white">
-            <div className="relative flex-grow">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search by job title, skills..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border-none rounded-lg text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Status Filter */}
-              <div className="relative" ref={statusRef}>
-                <button onClick={() => toggleDropdown('status')} className="flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 font-medium text-sm transition-colors min-w-[100px]">
-                  {statusFilter === 'All' ? 'Status' : statusFilter} <ChevronDown className="h-4 w-4 ml-2 text-gray-500" />
-                </button>
-                {activeDropdown === 'status' && (
-                  <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
-                    {uniqueStatuses.map(s => (
-                      <button key={s} onClick={() => { setStatusFilter(s); setActiveDropdown(null); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">{s}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Location Filter */}
-              <div className="relative" ref={locationRef}>
-                <button onClick={() => toggleDropdown('location')} className="flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 font-medium text-sm transition-colors min-w-[110px]">
-                  {locationFilter === 'All' ? 'Location' : locationFilter} <ChevronDown className="h-4 w-4 ml-2 text-gray-500" />
-                </button>
-                {activeDropdown === 'location' && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
-                    {uniqueLocations.map(l => (
-                      <button key={l} onClick={() => { setLocationFilter(l); setActiveDropdown(null); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">{l}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-               {/* Type Filter */}
-               <div className="relative" ref={typeRef}>
-                <button onClick={() => toggleDropdown('type')} className="flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 font-medium text-sm transition-colors min-w-[90px]">
-                  {typeFilter === 'All' ? 'Type' : typeFilter} <ChevronDown className="h-4 w-4 ml-2 text-gray-500" />
-                </button>
-                {activeDropdown === 'type' && (
-                  <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
-                    {uniqueTypes.map(t => (
-                      <button key={t} onClick={() => { setTypeFilter(t); setActiveDropdown(null); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-gray-700">{t}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* --- Table --- */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-white border-b border-gray-100">
-                  <th className="px-6 py-4 w-12">
-                    <input 
-                      type="checkbox" 
-                      className="w-5 h-5 rounded border-gray-300 text-orange-500 focus:ring-orange-500/50 cursor-pointer"
-                      checked={isAllSelected}
-                      onChange={handleSelectAll}
-                    />
-                  </th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Job Title</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Application Deadline</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Applicants</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {paginatedData.map((job) => (
-                  <tr key={job.id} className="hover:bg-gray-50/60 transition-colors group">
-                    <td className="px-6 py-5">
-                      <input 
-                        type="checkbox" 
-                        className="w-5 h-5 rounded border-gray-300 text-orange-500 focus:ring-orange-500/50 cursor-pointer"
-                        checked={selectedIds.has(job.id)}
-                        onChange={() => handleSelectOne(job.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="font-bold text-gray-900 text-sm">{job.title}</div>
-                      <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                        {job.location} <span className="text-gray-300">|</span> {job.type}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 whitespace-nowrap">
-                      <StatusBadge status={job.status} />
-                    </td>
-                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-600 font-medium">
-                      {job.deadline}
-                    </td>
-                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-600 font-medium pl-10">
-                      {job.applicants}
-                    </td>
-                    <td className="px-6 py-5 whitespace-nowrap text-right">
-                      {/* Actions always visible */}
-                      <div className="flex items-center justify-end gap-3">
-                        <button onClick={() => setModal({ isOpen: true, type: 'view', job })} className="text-gray-400 hover:text-gray-600 transition-colors" title="View Details">
-                          <Eye size={18} />
-                        </button>
-                        <button onClick={() => setModal({ isOpen: true, type: 'edit', job })} className="text-gray-400 hover:text-gray-600 transition-colors" title="Edit Job">
-                          <Edit2 size={18} />
-                        </button>
-                        <button onClick={() => setModal({ isOpen: true, type: 'delete', job })} className="text-gray-400 hover:text-red-500 transition-colors" title="Delete Job">
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {paginatedData.length === 0 && (
-                   <tr>
-                     <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                       No jobs found matching your criteria.
-                     </td>
-                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* --- Pagination --- */}
-          <div className="px-6 py-5 flex items-center justify-between border-t border-gray-100 bg-white">
-            <div className="text-sm text-gray-500">
-              Showing <span className="font-bold text-gray-900">{paginatedData.length > 0 ? startIndex + 1 : 0}</span> to <span className="font-bold text-gray-900">{Math.min(startIndex + itemsPerPage, filteredData.length)}</span> of <span className="font-bold text-gray-900">{filteredData.length}</span> results
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-                disabled={currentPage === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              
-              {[1, 2, 3].map(page => (
-                 <button 
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${currentPage === page ? 'bg-[#F97316] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}
-                >
-                  {page}
-                </button>
-              ))}
-              
-              <span className="text-gray-400 px-1">...</span>
-              <button className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors">9</button>
-
-              <button 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
-                disabled={currentPage === totalPages || totalPages === 0}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-
       </div>
+      {/* DIALOG BACKDROP */}
+      {showDialog && (
+        <div className="fixed top-5 right-5 z-50">
+          <div className="bg-white w-80 pt-4 rounded-md shadow-lg border border-gray-200 animate-fadeIn">
+            <div className="flex items-center gap-2 px-2 py-2 mb-2">
+              <FaBriefcase className="text-gray-600 text-md" />
+              {/* Message */}
+              <p className="text-md text-gray-600">{loadingMessage}</p>
+            </div>
 
-      {/* --- Modals --- */}
-      {modal.isOpen && (
-        <Modal
-          isOpen={modal.isOpen}
-          onClose={() => setModal({ isOpen: false, type: null, job: null })}
-          title={
-            modal.type === 'delete' ? 'Delete Job Posting' :
-            modal.type === 'bulk-delete' ? 'Delete Selected Jobs' :
-            modal.type === 'view' ? 'Job Details' :
-            modal.type === 'edit' ? 'Edit Job' : 
-            modal.type === 'add' ? 'Create a New Job Posting' : ''
-          }
-          subtitle={modal.type === 'add' || modal.type === 'edit' ? 'Fill out the details below to post a new job opening.' : undefined}
-          isDanger={modal.type === 'delete' || modal.type === 'bulk-delete'}
-          maxWidth={modal.type === 'add' || modal.type === 'edit' || modal.type === 'view' ? 'max-w-4xl' : 'max-w-md'} 
-          actions={
-            // Custom footer for 'add'/'edit' is inside CreateJobForm
-            (modal.type === 'add' || modal.type === 'edit') ? null :
-            (modal.type === 'delete' || modal.type === 'bulk-delete') ? (
-              <>
-                 <button onClick={() => setModal({ isOpen: false, type: null, job: null })} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors">Cancel</button>
-                 <button onClick={modal.type === 'bulk-delete' ? handleBulkDelete : handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm">Delete</button>
-              </>
-             ) : (
-              <button onClick={() => setModal({ isOpen: false, type: null, job: null })} className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium transition-colors shadow-sm">Close</button>
-             )
-          }
-        >
-           {(modal.type === 'delete' || modal.type === 'bulk-delete') ? (
-              <div className="flex items-start gap-4">
-                 <div className="p-3 bg-red-100 text-red-600 rounded-full shrink-0">
-                    <AlertCircle size={24} />
-                 </div>
-                 <div>
-                    <p className="font-semibold text-gray-900 text-lg">Are you sure?</p>
-                    <p className="text-gray-600 mt-1">
-                      {modal.type === 'bulk-delete' 
-                        ? `This will permanently delete ${selectedIds.size} selected job postings.` 
-                        : <>This will permanently delete the posting for <span className="font-bold">{modal.job?.title}</span>.</>
-                      }
-                      {" "}This action cannot be undone.
-                    </p>
-                 </div>
-              </div>
-           ) : modal.type === 'view' && modal.job ? (
-              <div className="space-y-4">
-                 <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Job Title</label>
-                    <p className="text-lg font-bold text-gray-900">{modal.job.title}</p>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Location</label>
-                        <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-2 rounded-lg">
-                            <MapPin size={16} /> {modal.job.location}
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Type</label>
-                        <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-2 rounded-lg">
-                            <Briefcase size={16} /> {modal.job.type}
-                        </div>
-                    </div>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Status</label>
-                        <StatusBadge status={modal.job.status} />
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Deadline</label>
-                         <div className="flex items-center gap-2 text-gray-700">
-                            <Clock size={16} /> {modal.job.deadline}
-                        </div>
-                    </div>
-                 </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Description</label>
-                    <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        {modal.job.description || "No description provided."}
-                    </p>
-                 </div>
-                 {modal.job.skills && modal.job.skills.length > 0 && (
-                     <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Required Skills</label>
-                        <div className="flex flex-wrap gap-2">
-                            {modal.job.skills.map(skill => (
-                                <span key={skill} className="px-2 py-1 rounded bg-orange-50 text-orange-700 text-xs font-medium border border-orange-100">
-                                    {skill}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                 )}
-              </div>
-           ) : (modal.type === 'add' || modal.type === 'edit') ? (
-              <CreateJobForm 
-                onClose={() => setModal({ isOpen: false, type: null, job: null })} 
-                onSave={handleSaveJob}
-                initialData={modal.job}
-              />
-           ) : null}
-        </Modal>
+            {/* Linear Loader */}
+            <div className="w-full h-2 bg-gray-200 overflow-hidden">
+              <div
+                className="h-full bg-orange-500 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
       )}
+    </div>
+  );
+}
 
+/* ---------- COMPONENTS (TypeScript) ---------- */
+
+interface SelectProps {
+  label: string;
+  icon?: React.ReactNode;
+  options: string[];
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  error?: string;
+}
+
+const SelectField = React.forwardRef<HTMLSelectElement, SelectProps>(
+  ({ label, icon, options, value, onChange, error }, ref) => {
+    return (
+      <div>
+        <div className="flex items-center gap-2">
+          {icon}
+          <label className="text-gray-700 font-medium">{label}</label>
+        </div>
+
+        <select
+          ref={ref}
+          value={value}
+          onChange={onChange}
+          className={`w-full mt-2 p-3 border rounded-xl bg-gray-50 
+            ${
+              error
+                ? "border-red-500 focus:ring-red-400"
+                : "border-gray-400 focus:ring-indigo-400"
+            }`}
+        >
+          <option value="">{`Select ${label}`}</option>
+
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+
+        {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+      </div>
+    );
+  }
+);
+
+interface LabelProps {
+  text: string;
+  icon?: React.ReactNode;
+}
+function Label({ icon, text }: LabelProps) {
+  return (
+    <label className="flex items-center gap-2 text-gray-700 font-medium">
+      {icon}
+      {text}
+    </label>
+  );
+}
+
+interface InputProps {
+  label: string;
+  icon?: React.ReactNode;
+  placeholder?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
+}
+
+const InputField = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ label, icon, placeholder, value, onChange, error }, ref) => {
+    return (
+      <div className="w-full">
+        <Label text={label} icon={icon} />
+        <input
+          ref={ref}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={`w-full mt-2 p-3 border rounded-xl bg-gray-50
+            ${
+              error
+                ? "border-red-500 focus:ring-red-400"
+                : "border-gray-400 focus:ring-indigo-400"
+            } transition`}
+        />
+        {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+      </div>
+    );
+  }
+);
+
+// Required for forwardRef components
+InputField.displayName = "InputField";
+
+/* ---------- COMPONENTS (TypeScript) ---------- */
+
+interface SectionProps {
+  title: string;
+  icon?: React.ReactNode;
+}
+
+function SectionTitle({ title, icon }: SectionProps) {
+  return (
+    <div className="border-b pb-3 mb-5 flex items-center gap-2">
+      {icon && (
+        <span className="text-xl font-semibold text-gray-500">{icon}</span>
+      )}
+      <h2 className="text-xl font-semibold text-gray-500">{title}</h2>
     </div>
   );
 }
